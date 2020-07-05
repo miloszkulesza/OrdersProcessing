@@ -1,0 +1,38 @@
+﻿@model IEnumerable<Table>
+@{ 
+    ViewData["Title"] = "Spis stolików";
+}
+
+<div class="text-center">
+    @if (Model.Count() > 0)
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nazwa</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var table in Model)
+                {
+                    <tr>
+                        <td class="align-middle">@table.Name</td>
+                        <td>
+                            <ul style="list-style: none">
+                                <li><a style="width: 70px; margin-bottom: 5px;" href="@Url.Action("EditTable")?tableId=@table.Id" class="btn btn-primary">Edytuj</a></li>
+                                <li><a style="width: 70px;" href="@Url.Action("DeleteTable")?tableId=@table.Id" class="btn btn-danger">Usuń</a></li>
+                            </ul>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            Brak zapisanych stolików
+        </div>
+    }
+</div>

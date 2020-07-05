@@ -1,0 +1,24 @@
+﻿@model Table
+@{
+    if (Model.Id == 0)
+        ViewData["Title"] = "Dodaj nowy stolik";
+    else
+        ViewData["Title"] = "Edytuj stolik";
+}
+
+<div class="text-center">
+    <h1 class="display-4">@ViewData["Title"]</h1>
+    <div class="col-8 offset-2">
+        <form asp-action="CreateTable", method="post">
+            @Html.HiddenFor(m => m.Id)
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <div class="form-group">
+                <label class="col-form-label float-left">Nazwa: </label>
+                <input class="form-control" type="text" asp-for="Name" />
+            </div>
+            <div class="form-group">
+                <input type="submit" class="btn btn-success" value="Zapisz" />
+            </div> 
+        </form>
+    </div>
+</div>

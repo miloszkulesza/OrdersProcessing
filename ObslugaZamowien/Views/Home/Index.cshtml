@@ -1,0 +1,117 @@
+﻿@model TableSummaryViewModel
+@{
+    ViewData["Title"] = "Strona główna";
+}
+
+@if (TempData["SuccessMessage"] != null)
+{
+    <div class="alert alert-success text-center">
+        @TempData["SuccessMessage"]
+    </div>
+}
+
+<div>
+    <div class="row d-flex justify-content-center">
+        <h1 class="display-4">Wybierz stolik</h1>
+    </div>
+    <div class="row d-flex justify-content-center">
+        <select id="tableSelector" class="form-control col-4" asp-for="SelectedTableId" asp-items='@new SelectList(Model.Tables, "Id", "Name")'>
+            <option value="0">Wybierz stolik</option>
+        </select>
+    </div>
+
+    <div class="row d-flex justify-content-center">
+        <div id="tableDetails" class="text-center">
+
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="deleteModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Uwaga!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="catid">Na pewno chcesz usunąć to zamówienie?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Nie</button>
+                <a class="btn btn-danger" id="modalDeleteBtn">Tak</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script>
+        $('#tableSelector').on('change', function (event) {
+            if (event.target.value != 0) {
+                $.ajax({
+                    type: 'GET',
+                    url: '@Url.Action("GetTableOrders")',
+                    data: {
+                        tableId: event.target.value
+                    },
+                    success: function (e) {
+                        if (e.length != 0) {
+                            generateOrdersTable(e);
+                        }
+                        else {;
+                            $('#tableDetails').html(
+                                `<p style="margin-top:10px;">Brak zamówień</p>` +
+                                `<a href="@Url.Action("CreateNewOrder")?tableId=${event.target.value}" class="btn btn-success">Dodaj zamówienie</button>`
+                            );
+                        }
+                    },
+                    error: function () {
+                        alert('Wystąpił błąd przy pobieraniu zamówień');
+                    }
+                });
+            }
+            else {
+                $('#tableDetails').html('');
+            }
+        });
+
+        function generateOrdersTable(e) {
+            let table = '<h1 class="display-4" style="margin-top:30px;">Zamówienia</h1>';
+            table += `<a href="@Url.Action("CreateNewOrder")?tableId=${e[0].tableId}" class="btn btn-success" style="margin-bottom:10px;">Dodaj nowe zamówienie</a>`
+            table += '<table class="table table-striped"><thead><tr><th>Nazwa</th><th>Wartość</th><th class="text-right">Akcje</th></tr><tbody>';
+             for (let i = 0; i < e.length; i++) {
+                table += '<tr><td class="align-middle"><ul style="list-style:none;">';
+                for (let j = 0; j < e[i].dishes.length; j++) {
+                    table += `<li class="text-left">${e[i].dishes[j].dish.name} ${e[i].dishes[j].amount} szt.</li>`;
+                 }
+                 if (e[i].tip == true) {
+                     table += `</ul></td><td class="align-middle">${e[i].totalValueWithTip.toFixed(2)} zł</td>`;
+                 }
+                 else {
+                     table += `</ul></td><td class="align-middle">${e[i].dishesValue.toFixed(2)} zł</td>`;
+                 }
+                 if (e[i].isPaid == true) {
+                     table += '<td class="align-middle">Zamówienie opłacone</td>'
+                 }
+                 else {
+                     table += `<td class="text-center"><ul style="list-style:none;"><li><a href="@Url.Action("EditOrder")?orderId=${e[i].id}" class="btn btn-primary" style="margin-bottom:10px;width:70px;">Edytuj</a></li>`;
+                     table += `<li><a class="btn btn-success" href="@Url.Action("Payout")?orderId=${e[i].id}" style="margin-bottom:10px;width:70px;">Zapłać</a></li>`;
+                     table += `<li><a class="btn btn-danger" href="#" data-toggle="modal" data-target="#deleteModal" style="width:70px;" data-orderid="${e[i].id}">Usuń</a></li></ul></td></tr>`;
+                 }
+             }
+             table += '</tbody><table>';
+             $('#tableDetails').html(table);
+        }
+
+        $('#deleteModal').on('show.bs.modal', function (event) {
+            var button = $(event.relatedTarget);
+            var orderid = button.data('orderid');
+            var urlaction = `@Url.Action("DeleteOrder")?orderId=${orderid}`;
+            $("#modalDeleteBtn").attr("href", urlaction);
+        })
+    </script>
+}

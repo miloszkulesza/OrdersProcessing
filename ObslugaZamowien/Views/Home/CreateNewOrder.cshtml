@@ -1,0 +1,195 @@
+﻿@model NewOrderViewModel
+@{
+    ViewData["Title"] = "Nowe zamówienie";
+}
+
+<div class="text-center">
+    <div class="col-8 offset-2">
+        <form asp-action="CreateNewOrder" , method="post">
+            @for (var i = 0; i < Model.Dishes.Count; i++)
+            {
+                @Html.HiddenFor(model => Model.Dishes[i].Name)
+                @Html.HiddenFor(model => Model.Dishes[i].Id)
+                @Html.HiddenFor(model => Model.Dishes[i].Price)
+            }
+            @if (Model.Order != null)
+            {
+                @Html.HiddenFor(model => Model.Order.Id)
+                @Html.HiddenFor(model => Model.Order.TableId)
+                @Html.HiddenFor(model => Model.Order.Dishes)
+            }
+            @Html.HiddenFor(x => x.Table)
+            @Html.HiddenFor(x => x.TableId)
+            @Html.HiddenFor(x => x.IsEditing)
+            <div asp-validation-summary="All" class="text-danger"></div>
+            <div class="form-group">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Danie</th>
+                            <th>Cena</th>
+                            <th>Ilość</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (int i = 0; i < Model.Dishes.Count; i++)
+                        {
+                            <tr>
+                                <td>
+                                    <input type="checkbox" asp-for="@Model.Dishes[i].IsSelected" id="checkboxDish-@Model.Dishes[i].Id" data-dishid="@Model.Dishes[i].Id" onchange="onCheckboxChange(event)" />
+                                </td>
+                                <td class="text-left">@Model.Dishes[i].Name</td>
+                                @if (Model.Dishes[i].Price == 0)
+                                {
+                                    <td>Gratis</td>
+                                }
+                                else
+                                {
+                                    <td>@Model.Dishes[i].Price.ToString("c")</td>
+                                }
+                                <td>
+                                    <input type="number" min="0" asp-for="@Model.Dishes[i].Amount" id="inputDish-@Model.Dishes[i].Id" data-dishId="@Model.Dishes[i].Id" onchange="onInputChange(event)" />
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+            <div class="form-group">
+                <p id="totalValue" class="font-weight-bolder"></p>
+            </div>
+            <div class="form-group d-inline">
+                <input type="submit" value="Zapisz" class="btn btn-success" />
+                <a href="#" class="btn btn-danger" data-toggle="modal" data-target="#goBackModal">Powrót</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="modal fade" id="goBackModal" tabindex="-1" role="dialog" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="exampleModalLabel">Uwaga!</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p class="catid">Na pewno chcesz porzucić to zamówienie? Formularz zostanie skasowany.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Nie</button>
+                <a class="btn btn-danger" id="goBackButton">Tak</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+@section Scripts
+{
+    <script>
+        let totalValue = 0;
+        let oldValue;
+        let True = true, False = false;
+
+        $(document).ready(function () {
+            if (@Model.IsEditing != false) {
+                $.ajax({
+                    type: 'GET',
+                    url: `@Url.Action("GetOrderValue")`,
+                    data: {
+                        orderId: @Model.Order.Id
+                    },
+                    success: function (e) {
+                        totalValue = e;
+                        $('#totalValue').html(`Łączna wartość: ${totalValue.toFixed(2)} zł`);
+                    },
+                    error: function (e) {
+                        console.log(e);
+                    }
+                });
+            }
+            else {
+                $('#totalValue').html(`Łączna wartość: ${totalValue.toFixed(2)} zł`);
+            }
+            addEventListeners();
+        });
+
+        function onInputChange(event)
+        {
+            if ($(`#checkboxDish-${event.target.dataset.dishid}`).is(':checked')) {
+                $.ajax({
+                    type: 'GET',
+                    url: '@Url.Action("GetDishValue")',
+                    data: {
+                        dishId: event.target.dataset.dishid
+                    },
+                    success: function (e) {
+                        if (oldValue != null) {
+                            totalValue -= oldValue * e;
+                        }
+                        totalValue += e * event.target.value;
+                        $('#totalValue').html(`Łączna wartość: ${totalValue.toFixed(2)} zł`);
+                    },
+                    error: function () {
+                        alert('Wystąpił błąd przy pobieraniu zamówień');
+                    }
+                });
+            }
+        }
+
+        function onCheckboxChange(event) {
+            if (!$(`#checkboxDish-${event.target.dataset.dishid}`).is(':checked')) {
+                let amount = $(`#inputDish-${event.target.dataset.dishid}`).val();
+                $.ajax({
+                    type: 'GET',
+                    url: '@Url.Action("GetDishValue")',
+                    data: {
+                        dishId: event.target.dataset.dishid
+                    },
+                    success: function (e) {
+                        totalValue -= amount * e;
+                        $('#totalValue').html(`Łączna wartość: ${totalValue.toFixed(2)} zł`);
+                    },
+                    error: function () {
+                        alert('Wystąpił błąd przy pobieraniu zamówień');
+                    }
+                });
+            }
+            else {
+                if ($(`#inputDish-${event.target.dataset.dishid}`).val() != null) {
+                    let amount = $(`#inputDish-${event.target.dataset.dishid}`).val();
+                    $.ajax({
+                    type: 'GET',
+                    url: '@Url.Action("GetDishValue")',
+                    data: {
+                        dishId: event.target.dataset.dishid
+                    },
+                    success: function (e) {
+                        totalValue += amount * e;
+                        $('#totalValue').html(`Łączna wartość: ${totalValue.toFixed(2)} zł`);
+                    },
+                    error: function () {
+                        alert('Wystąpił błąd przy pobieraniu zamówień');
+                    }
+                });
+                }
+            }
+        }
+
+        function addEventListeners() {
+            for (let i = 0; i < @Model.Dishes.Count; i++) {
+                $(`#inputDish-${i}`).on('focusin', function () {
+                    oldValue = $(`#inputDish-${i}`).val();
+                });
+            }
+        }
+
+        $('#goBackModal').on('show.bs.modal', function (event) {
+            var urlaction = `@Url.Action("Index")`;
+            $("#goBackButton").attr("href", urlaction);
+        })
+    </script>
+}

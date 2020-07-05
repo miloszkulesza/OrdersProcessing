@@ -1,0 +1,47 @@
+﻿@model IEnumerable<Dish>
+@{ 
+    ViewData["Title"] = "Spis potraw";
+}
+
+<div class="text-center">
+    @if (Model.Count() > 0)
+    {
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>Nazwa</th>
+                    <th class="text-center">Cena</th>
+                    <th class="text-center">Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var dish in Model)
+                {
+                    <tr>
+                        <td class="align-middle">@dish.Name</td>
+                        @if (dish.Price == 0)
+                        {
+                            <td class="text-center align-middle">Gratis</td>
+                        }
+                        else
+                        {
+                            <td class="text-center align-middle">@dish.Price.ToString("c")</td>
+                        }
+                        <td class="text-center">
+                            <ul style="list-style: none">
+                                <li><a style="width: 70px; margin-bottom: 5px;" href="@Url.Action("EditDish")?dishId=@dish.Id" class="btn btn-primary">Edytuj</a></li>
+                                <li><a style="width: 70px;" href="@Url.Action("DeleteDish")?dishId=@dish.Id" class="btn btn-danger">Usuń</a></li>
+                            </ul>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+    }
+    else
+    {
+        <div class="alert alert-danger">
+            Brak zapisanych potraw
+        </div>
+    }
+</div>
