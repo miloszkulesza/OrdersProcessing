@@ -4,6 +4,7 @@ User can manage dishes and tables (create, edit, delete), create new order for o
 Application use browser session to save all data and supports responsive design.
 
 ![Home page](https://i.imgur.com/ooyvTMb.png)
+![Order summary/payment](https://i.imgur.com/XM5lJHU.png)
 ![Create order for one table](https://i.imgur.com/d9sof7m.png)
 ![Create order for many tables](https://i.imgur.com/sIJLfFx.png)
 ![Create new table](https://i.imgur.com/vyuI3cY.png)
